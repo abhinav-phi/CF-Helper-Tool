@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Codeforces AI Assistant",
+  "version": "1.0.0",
+  "description": "AI-powered solution generator for Codeforces problems with modern UI",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://codeforces.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Codeforces AI Assistant",
+    "default_icon": {
+      "16": "icons/icons16px.png",
+      "32": "icons/icons32px.png",
+      "64": "icons/icons64px.png",
+      "128": "icons/icons128px.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://codeforces.com/problemset/problem/*",
+        "https://codeforces.com/contest/*/problem/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "16": "icons/icons16px.png",
+    "32": "icons/icons32px.png",
+    "64": "icons/icons64px.png",
+    "128": "icons/icons128px.png"
+  },
+  "commands": {
+    "open-extension": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      },
+      "description": "Open Codeforces AI Assistant"
+    }
+  },
+  "options_page": "options_html.html"
+}
