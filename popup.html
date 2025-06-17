@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CF Helper</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div class="app-title">CF Helper</div>
+            </div>
+            <div class="problem-info">
+                <span id="problemTitle">Loading problem...</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <div class="form-group">
+                    <label class="label">Approach Language</label>
+                    <div class="dropdown" id="approachDropdown">
+                        <button class="dropdown-button" id="approachLangSelect">
+                            <span>English</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <div class="dropdown-item" data-value="english">English</div>
+                            <div class="dropdown-item" data-value="hinglish">Hinglish</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Code Language</label>
+                    <div class="dropdown" id="codeDropdown">
+                        <button class="dropdown-button" id="codeLangSelect">
+                            <span>C++</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <div class="dropdown-item" data-value="cpp">C++</div>
+                            <div class="dropdown-item" data-value="python">Python</div>
+                            <div class="dropdown-item" data-value="java">Java</div>
+                            <div class="dropdown-item" data-value="c">C</div>
+                            <div class="dropdown-item" data-value="javascript">JavaScript</div>
+                            <div class="dropdown-item" data-value="go">Go</div>
+                            <div class="dropdown-item" data-value="rust">Rust</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="generate-btn" id="generateBtn" disabled>
+                    Generate Solution
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Generating solution...</p>
+            </div>
+
+            <div class="results" id="results">
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-title">Approach</div>
+                        <button class="copy-btn" id="copyApproach">Copy</button>
+                    </div>
+                    <div class="result-content">
+                        <div class="approach-text" id="approach"></div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-title">Code Solution</div>
+                        <button class="copy-btn" id="copyCode">Copy</button>
+                    </div>
+                    <div class="result-content">
+                        <div class="code-block" id="code"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
