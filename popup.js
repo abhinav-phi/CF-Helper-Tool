@@ -131,59 +131,159 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function generateSolution() {
-            if (!currentProblem?.title) {
-        showError("No problem detected on this page");
-        return;
-    }
-        console.log('⚡ Starting solution generation');
-        
-        // Get values from custom dropdowns
-        const approachLangButton = document.getElementById('approachLangSelect');
-        const codeLangButton = document.getElementById('codeLangSelect');
-        
-        const approachLang = approachLangButton?.dataset.value || 'hinglish';
-        const codeLang = codeLangButton?.dataset.value || 'cpp';
-        
-        console.log('🌐 Languages:', { approachLang, codeLang });
-        
-        // Show loading state
-        if (loadingDiv) {
-            loadingDiv.classList.remove('show')
-            console.log('⏳ Loading shown');
-        }
-        if (resultsDiv) {
-            resultsDiv.classList.remove('show');
-        }
-        if (generateBtn) {
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'Generating...';
-        }
+async function generateSolution() {
+  if (!currentProblem?.title) {
+    showError("No problem detected on this page");
+    return;
+  }
 
+  console.log("⚡ Starting solution generation");
+
+  const approachLangButton = document.getElementById("approachLangSelect");
+  const codeLangButton = document.getElementById("codeLangSelect");
+
+  const approachLang = approachLangButton?.dataset.value || "hinglish";
+  const codeLang = codeLangButton?.dataset.value || "cpp";
+
+  // Show loading
+  if (loadingDiv) loadingDiv.classList.remove("hidden");
+  if (resultsDiv) resultsDiv.classList.remove("show");
+  if (generateBtn) {
+    generateBtn.disabled = true;
+    generateBtn.textContent = "Generating...";
+  }
+
+  try {
+    const solution = await callAI(currentProblem, approachLang, codeLang);
+    displayResults(solution.approach, solution.code, codeLang);
+  } catch (error) {
+    console.error("💥 Generation error:", error);
+    showError("Failed to generate solution. Please try again.");
+  } finally {
+    if (loadingDiv) loadingDiv.classList.add("hidden");
+    if (generateBtn) {
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Generate Solution";
+    }
+  }
+}
+
+
+    // async function generateSolution() {
+    //         if (!currentProblem?.title) {
+    //     showError("No problem detected on this page");
+    //     return;
+    // }
+    //     console.log('⚡ Starting solution generation');
+        
+    //     // Get values from custom dropdowns
+    //     const approachLangButton = document.getElementById('approachLangSelect');
+    //     const codeLangButton = document.getElementById('codeLangSelect');
+        
+    //     const approachLang = approachLangButton?.dataset.value || 'hinglish';
+    //     const codeLang = codeLangButton?.dataset.value || 'cpp';
+        
+    //     console.log('🌐 Languages:', { approachLang, codeLang });
+        
+    //     // Show loading state
+    //     if (loadingDiv) {
+    //         loadingDiv.classList.remove('show')
+    //         console.log('⏳ Loading shown');
+    //     }
+    //     if (resultsDiv) {
+    //         resultsDiv.classList.remove('show');
+    //     }
+    //     if (generateBtn) {
+    //         generateBtn.disabled = true;
+    //         generateBtn.textContent = 'Generating...';
+    //     }
+
+    //     try {
+    //         // Simulate API call with mock data
+    //         await new Promise(resolve => setTimeout(resolve, 2000));
+            
+    //         const mockSolution = getMockSolution(currentProblem.title, approachLang, codeLang);
+    //         console.log('📝 Mock solution generated');
+            
+    //         // Display results
+    //         displayResults(mockSolution.approach, mockSolution.code, codeLang);
+            
+    //     } catch (error) {
+    //         console.error('💥 Generation error:', error);
+    //         showError('Failed to generate solution. Please try again.');
+    //     } finally {
+    //         if (loadingDiv) {
+    //             loadingDiv.classList.add('hidden');
+    //             console.log('⏳ Loading hidden');
+    //         }
+    //         if (generateBtn) {
+    //             generateBtn.disabled = false;
+    //             generateBtn.textContent = 'Generate Solution';
+    //         }
+    //     }
+    // }
+
+    async function callAI(problem, approachLang, codeLang) {
+    // Get API keys from storage
+    const result = await new Promise(resolve => {
+        chrome.storage.sync.get(['openaiKey', 'claudeKey', 'geminiKey', 'selectedAI'], resolve);
+    });
+    
+    const prompt = `
+Problem: ${problem.title}
+Statement: ${problem.statement}
+Time Limit: ${problem.timeLimit}
+Memory Limit: ${problem.memoryLimit}
+Examples: ${JSON.stringify(problem.examples)}
+
+Please provide:
+1. A solution approach in ${approachLang} language
+2. Clean code in ${codeLang}
+
+Format your response as:
+APPROACH:
+[Your approach here]
+
+CODE:  
+[Your code here]
+`;
+
+    // Try OpenAI first
+    if (result.openaiKey) {
         try {
-            // Simulate API call with mock data
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${result.openaiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4',
+                    messages: [{ role: 'user', content: prompt }],
+                    max_tokens: 2000
+                })
+            });
             
-            const mockSolution = getMockSolution(currentProblem.title, approachLang, codeLang);
-            console.log('📝 Mock solution generated');
-            
-            // Display results
-            displayResults(mockSolution.approach, mockSolution.code, codeLang);
-            
+            if (response.ok) {
+                const data = await response.json();
+                return parseAIResponse(data.choices[0].message.content);
+            }
         } catch (error) {
-            console.error('💥 Generation error:', error);
-            showError('Failed to generate solution. Please try again.');
-        } finally {
-            if (loadingDiv) {
-                loadingDiv.classList.add('hidden');
-                console.log('⏳ Loading hidden');
-            }
-            if (generateBtn) {
-                generateBtn.disabled = false;
-                generateBtn.textContent = 'Generate Solution';
-            }
+            console.error('OpenAI error:', error);
         }
     }
+    
+    // Fallback to mock if API fails
+    return getMockSolution(problem.title, approachLang, codeLang);
+}
+
+function parseAIResponse(response) {
+    const parts = response.split('CODE:');
+    const approach = parts[0].replace('APPROACH:', '').trim();
+    const code = parts[1] ? parts[1].trim() : 'No code provided';
+    
+    return { approach, code };
+}
 
     function displayResults(approach, code, language) {
         console.log('📊 Displaying results...');
