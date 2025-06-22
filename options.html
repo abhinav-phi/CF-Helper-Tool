@@ -6,7 +6,483 @@
     <title>CF Helper - Settings</title>
     <style>
         :root {
+            --bg-primary: #0a0a0a;<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CF Helper - Settings</title>
+    <style>
+        :root {
             --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #888888;
+            --accent: #667eea;
+            --accent-hover: #5a6fd8;
+            --success: #4CAF50;
+            --error: #f44336;
+            --warning: #ff9800;
+            --border: #333333;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e0e0e0;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border: #e0e0e0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .settings-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group select,
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .status.info {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: var(--border);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent);
+        }
+
+        .toggle-switch.active::before {
+            transform: translateX(25px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .import-export {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .settings-section {
+                padding: 1.5rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .version-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ CF Helper Settings</h1>
+            <p>Customize your competitive programming assistant</p>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">🎨 Appearance</div>
+            <div class="theme-toggle">
+                <span>Dark Mode</span>
+                <label class="toggle-switch" for="themeToggle">
+                    <input type="checkbox" id="themeToggle" class="hidden">
+                </label>
+                <span>Light Mode</span>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">🔧 Default Preferences</div>
+            
+            <div class="form-group">
+                <label for="defaultApproachLang">Default Approach Language:</label>
+                <select id="defaultApproachLang">
+                    <option value="english">English</option>
+                    <option value="hinglish">Hinglish</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="defaultCodeLang">Default Code Language:</label>
+                <select id="defaultCodeLang">
+                    <option value="cpp">C++</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="c">C</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="go">Go</option>
+                    <option value="rust">Rust</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoDetect">
+                    <label for="autoDetect">Auto-detect language from problem tags</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showNotifications">
+                    <label for="showNotifications">Show notifications</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">📊 Usage Statistics</div>
+            <div id="stats" class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Solutions Generated:</span>
+                    <span class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Problems Analyzed:</span>
+                    <span class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Last Used:</span>
+                    <span class="stat-value">Never</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">💾 Data Management</div>
+            
+            <div class="import-export">
+                <button class="btn btn-secondary" id="exportSettings">
+                    📤 Export Settings
+                </button>
+                <button class="btn btn-secondary" id="importSettings">
+                    📥 Import Settings
+                </button>
+                <input type="file" id="importFile" accept=".json" class="hidden">
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-primary" id="saveSettings">
+                💾 Save Settings
+            </button>
+            <button class="btn btn-warning" id="resetSettings">
+                🔄 Reset to Defaults
+            </button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="version-info">
+            <p>CF Helper Extension v1.0.0</p>
+            <p>Made with ❤️ for competitive programmers</p>
+        </div>
+    </div>
+
+    <script src="options.js"></script>
+    <script>
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const toggleSwitch = document.querySelector('.toggle-switch');
+            
+            // Initialize theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            if (savedTheme === 'light') {
+                themeToggle.checked = true;
+                toggleSwitch.classList.add('active');
+            }
+            
+            // Handle theme toggle
+            themeToggle.addEventListener('change', function() {
+                const theme = this.checked ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                
+                if (this.checked) {
+                    toggleSwitch.classList.add('active');
+                } else {
+                    toggleSwitch.classList.remove('active');
+                }
+            });
+            
+            // Handle toggle switch click
+            toggleSwitch.addEventListener('click', function() {
+                themeToggle.checked = !themeToggle.checked;
+                themeToggle.dispatchEvent(new Event('change'));
+            });
+        });
+    </script>
+</body>
+</html>
             --bg-secondary: #1a1a1a;
             --bg-tertiary: #2a2a2a;
             --text-primary: #ffffff;
