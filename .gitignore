@@ -1,0 +1,29 @@
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node dependencies (if used)
+node_modules/
+
+# Build output (e.g., Webpack, Vite, Parcel)
+dist/
+build/
+
+# VS Code settings
+.vscode/
+
+# Mac system files
+.DS_Store
+
+# Environment files
+.env
+.env.*.local
+
+# Cache
+.cache/
+*.local
+
+# Chrome Extension packaging
+*.crx
+*.pem
