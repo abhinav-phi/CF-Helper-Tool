@@ -8,8 +8,18 @@
     "storage",
     "contextMenus",
     "scripting",
-    "notifications"
+    "notifications",
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "scripting",
+    "notifications",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*"
   ],
+
+
   "host_permissions": [
     "https://codeforces.com/*"
   ],
