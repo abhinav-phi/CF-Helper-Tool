@@ -11,7 +11,6 @@ body {
     overflow: hidden;
 }
 
-/* Popup Container */
 .popup-container {
     width: 400px;
     min-height: 600px;
@@ -24,7 +23,6 @@ body {
     overflow: hidden;
 }
 
-/* Header */
 .header {
     padding: 24px 24px 20px;
     background: linear-gradient(135deg, rgba(123, 67, 151, 0.2), rgba(220, 38, 127, 0.2));
@@ -85,9 +83,10 @@ body {
     opacity: 0.8;
     font-size: 13px;
     margin-top: 4px;
+    word-wrap: break-word;
+    max-width: 100%;
 }
 
-/* Main Content */
 .content {
     padding: 24px;
 }
@@ -136,6 +135,7 @@ body {
 
 .dropdown-arrow {
     transition: transform 0.3s ease;
+    font-size: 12px;
 }
 
 .dropdown.open .dropdown-arrow {
@@ -173,6 +173,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 14px;
 }
 
 .dropdown-item:last-child {
@@ -184,7 +185,6 @@ body {
     color: #ffffff;
 }
 
-/* Generate Button */
 .generate-btn {
     width: 100%;
     padding: 16px;
@@ -226,10 +226,25 @@ body {
     transform: none;
 }
 
-/* Results Section */
+.generate-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.loading.show {
+    display: block;
+    animation: fadeInUp 0.5s ease;
+}
+
 .results {
     margin-top: 24px;
-    display: block;
+    display: none;
 }
 
 .results.show {
@@ -295,6 +310,13 @@ body {
     color: #cbd5e0;
 }
 
+.approach-text pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    margin: 0;
+}
+
 .code-block {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -307,15 +329,18 @@ body {
     overflow-x: auto;
 }
 
-/* Loading Animation */
-.loading {
-    display: block;
-    text-align: center;
-    padding: 20px;
+.code-block pre {
+    margin: 0;
+    white-space: pre;
+    overflow-x: auto;
 }
 
-.loading.show {
-    display: block;
+.code-block code {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    background: none;
+    padding: 0;
 }
 
 .spinner {
@@ -333,7 +358,7 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Scrollbar Styling */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -351,9 +376,27 @@ body {
     background: rgba(123, 67, 151, 0.7);
 }
 
-/* Responsive Design */
+/* Responsive design */
 @media (max-width: 420px) {
     .popup-container {
         width: 360px;
     }
+    
+    .header {
+        padding: 20px 20px 16px;
+    }
+    
+    .content {
+        padding: 20px;
+    }
+}
+
+/* Hidden utility class */
+.hidden {
+    display: none !important;
+}
+
+/* Error styling */
+.error {
+    color: #ff6b6b !important;
 }
