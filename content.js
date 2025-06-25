@@ -1,23 +1,27 @@
-// Content script for extracting Codeforces problem data
 (function() {
     'use strict';
 
-    // Listen for messages from popup
+    console.log('CF Helper content script loaded');
+
+    // Listen for messages from background script
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        console.log('Content script received message:', request);
+        
         if (request.action === 'extractProblem') {
             const problem = extractProblemData();
+            console.log('Extracted problem:', problem);
             sendResponse({
                 success: problem !== null,
                 problem: problem
             });
         }
-        return true; // Keep message channel open for async response
+        return true;
     });
 
     function extractProblemData() {
         try {
-            // Check if we're on a Codeforces problem page
             if (!isCodeforcesProblemsPage()) {
+                console.log('Not a Codeforces problem page');
                 return null;
             }
 
@@ -28,6 +32,7 @@
             const examples = extractExamples();
 
             if (!title) {
+                console.log('No title found');
                 return null;
             }
 
@@ -54,22 +59,22 @@
     }
 
     function extractProblemTitle() {
-        // Try different selectors for problem title
         const titleSelectors = [
             '.problem-statement .title',
             '.problemindexholder .title',
             '.header .title',
-            'div[class*="title"]'
+            'div[class*="title"]',
+            '.problem-statement .header .title'
         ];
 
         for (const selector of titleSelectors) {
             const element = document.querySelector(selector);
-            if (element) {
+            if (element && element.textContent.trim()) {
                 return element.textContent.trim();
             }
         }
 
-        // Fallback: extract from page title
+        // Fallback to page title
         const pageTitle = document.title;
         if (pageTitle.includes('Problem') || pageTitle.includes('Codeforces')) {
             return pageTitle.split(' - ')[0].trim();
@@ -79,7 +84,6 @@
     }
 
     function extractProblemStatement() {
-        // Try to extract the problem statement
         const statementSelectors = [
             '.problem-statement',
             '.problemstatement',
@@ -90,17 +94,22 @@
         for (const selector of statementSelectors) {
             const element = document.querySelector(selector);
             if (element) {
-                // Remove title and other non-essential parts
+                // Clone to avoid modifying original
                 const clone = element.cloneNode(true);
                 
-                // Remove title, input/output format sections
-                const titleElements = clone.querySelectorAll('.title');
-                const headerElements = clone.querySelectorAll('.header');
+                // Remove unwanted elements
+                const unwantedSelectors = [
+                    '.title', '.header', '.input-specification', 
+                    '.output-specification', '.sample-tests', '.note'
+                ];
                 
-                titleElements.forEach(el => el.remove());
-                headerElements.forEach(el => el.remove());
+                unwantedSelectors.forEach(sel => {
+                    const elements = clone.querySelectorAll(sel);
+                    elements.forEach(el => el.remove());
+                });
                 
-                return clone.textContent.trim();
+                const text = clone.textContent.trim();
+                return text.length > 50 ? text : '';
             }
         }
 
@@ -122,7 +131,7 @@
             }
         }
 
-        // Look for time limit in problem statement
+        // Search in page text
         const text = document.body.textContent;
         const timeLimitMatch = text.match(/time limit[:\s]*(\d+(?:\.\d+)?)\s*second/i);
         if (timeLimitMatch) {
@@ -147,7 +156,7 @@
             }
         }
 
-        // Look for memory limit in problem statement
+        // Search in page text
         const text = document.body.textContent;
         const memoryLimitMatch = text.match(/memory limit[:\s]*(\d+)\s*megabyte/i);
         if (memoryLimitMatch) {
@@ -161,12 +170,42 @@
         const examples = [];
         
         try {
-            // Look for input/output examples
-            const sampleTests = document.querySelectorAll('.sample-test, .sample, .example');
+            // Try different selectors for sample tests
+            const sampleSelectors = [
+                '.sample-test',
+                '.sample',
+                '.example',
+                'div[class*="sample"]'
+            ];
+            
+            let sampleTests = [];
+            for (const selector of sampleSelectors) {
+                sampleTests = document.querySelectorAll(selector);
+                if (sampleTests.length > 0) break;
+            }
             
             sampleTests.forEach((sample, index) => {
-                const inputElement = sample.querySelector('.input pre, .input code, [class*="input"] pre');
-                const outputElement = sample.querySelector('.output pre, .output code, [class*="output"] pre');
+                const inputSelectors = [
+                    '.input pre', '.input code', '[class*="input"] pre',
+                    '.input div', '[class*="input"] div'
+                ];
+                const outputSelectors = [
+                    '.output pre', '.output code', '[class*="output"] pre',
+                    '.output div', '[class*="output"] div'
+                ];
+                
+                let inputElement = null;
+                let outputElement = null;
+                
+                for (const sel of inputSelectors) {
+                    inputElement = sample.querySelector(sel);
+                    if (inputElement && inputElement.textContent.trim()) break;
+                }
+                
+                for (const sel of outputSelectors) {
+                    outputElement = sample.querySelector(sel);
+                    if (outputElement && outputElement.textContent.trim()) break;
+                }
                 
                 if (inputElement && outputElement) {
                     examples.push({
@@ -177,18 +216,18 @@
                 }
             });
 
-            // Alternative approach: look for Input/Output sections
+            // Fallback: look for consecutive pre elements
             if (examples.length === 0) {
-                const inputs = document.querySelectorAll('pre');
-                for (let i = 0; i < inputs.length - 1; i++) {
-                    const currentPre = inputs[i];
-                    const nextPre = inputs[i + 1];
+                const preElements = document.querySelectorAll('pre');
+                for (let i = 0; i < preElements.length - 1; i++) {
+                    const currentPre = preElements[i];
+                    const nextPre = preElements[i + 1];
                     
-                    // Check if this looks like an input/output pair
                     const prevText = currentPre.previousElementSibling?.textContent?.toLowerCase() || '';
                     const nextText = nextPre.previousElementSibling?.textContent?.toLowerCase() || '';
                     
-                    if (prevText.includes('input') && nextText.includes('output')) {
+                    if ((prevText.includes('input') && nextText.includes('output')) ||
+                        (currentPre.textContent.trim() && nextPre.textContent.trim())) {
                         examples.push({
                             input: currentPre.textContent.trim(),
                             output: nextPre.textContent.trim(),
@@ -201,14 +240,14 @@
         } catch (error) {
             console.error('Error extracting examples:', error);
         }
-
+        
         return examples;
     }
-
+    
     // Add visual indicator that extension is active
     function addExtensionIndicator() {
         if (document.getElementById('cf-helper-indicator')) {
-            return; // Already added
+            return;
         }
 
         const indicator = document.createElement('div');
@@ -227,6 +266,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             opacity: 0.9;
             pointer-events: none;
+            transition: opacity 1s ease-out;
         `;
         indicator.textContent = '✨ CF Helper Active';
         
@@ -234,7 +274,6 @@
 
         // Fade out after 3 seconds
         setTimeout(() => {
-            indicator.style.transition = 'opacity 1s ease-out';
             indicator.style.opacity = '0';
             setTimeout(() => {
                 if (indicator.parentNode) {
@@ -244,7 +283,7 @@
         }, 3000);
     }
 
-    // Initialize when page loads
+    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', addExtensionIndicator);
     } else {
