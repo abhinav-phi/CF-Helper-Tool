@@ -1,7 +1,7 @@
-// Popup script for Codeforces Extension - DEBUG VERSION
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Extension loaded');
+    console.log('🚀 Popup loaded');
     
+    // Get DOM elements
     const generateBtn = document.getElementById('generateBtn');
     const loadingDiv = document.getElementById('loading');
     const resultsDiv = document.getElementById('results');
@@ -9,81 +9,92 @@ document.addEventListener('DOMContentLoaded', function() {
     const codeDiv = document.getElementById('code');
     const copyApproachBtn = document.getElementById('copyApproach');
     const copyCodeBtn = document.getElementById('copyCode');
+    const problemTitleElement = document.getElementById('problemTitle');
     
-    // Debug: Check which elements exist
-    console.log('🔍 Element check:');
-    console.log('generateBtn:', generateBtn ? '✅' : '❌');
-    console.log('loadingDiv:', loadingDiv ? '✅' : '❌');
-    console.log('resultsDiv:', resultsDiv ? '✅' : '❌');
-    console.log('approachDiv:', approachDiv ? '✅' : '❌');
-    console.log('codeDiv:', codeDiv ? '✅' : '❌');
-    console.log('copyApproachBtn:', copyApproachBtn ? '✅' : '❌');
-    console.log('copyCodeBtn:', copyCodeBtn ? '✅' : '❌');
+    // Verify elements exist
+    console.log('Element check:', {
+        generateBtn: !!generateBtn,
+        loadingDiv: !!loadingDiv,
+        resultsDiv: !!resultsDiv,
+        approachDiv: !!approachDiv,
+        codeDiv: !!codeDiv,
+        problemTitleElement: !!problemTitleElement
+    });
     
     let currentProblem = null;
-
-    // Initialize custom dropdowns
-    initializeDropdowns();
-
-    // Skip content script check for now - use mock problem
- chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-    if (!tabs[0]?.url?.includes('codeforces.com')) {
-        showError("Please use on a Codeforces problem page");
-        return;
-    }
+    let selectedApproachLang = 'english';
+    let selectedCodeLang = 'cpp';
     
-    chrome.runtime.sendMessage(
-        {action: 'getProblemData'},
-        (response) => {
-            if (chrome.runtime.lastError || !response?.problem) {
-                console.error('Error:', chrome.runtime.lastError);
-                showError("Failed to load problem data");
-                return;
-            }
-            currentProblem = response.problem;
-            updateUI();
-        }
-    );
-});
-    updateUI();
+    // Initialize dropdowns
+    initializeDropdowns();
+    
+    // Load user preferences
+    loadUserPreferences();
+    
+    // Load problem data
+    loadProblemData();
 
-    // Dropdown functionality
     function initializeDropdowns() {
         const dropdowns = document.querySelectorAll('.dropdown');
-        console.log('🎛️ Found dropdowns:', dropdowns.length);
+        console.log('🎛️ Initializing dropdowns:', dropdowns.length);
         
         dropdowns.forEach(dropdown => {
             const button = dropdown.querySelector('.dropdown-button');
             const menu = dropdown.querySelector('.dropdown-menu');
             const items = dropdown.querySelectorAll('.dropdown-item');
             
-            if (button && menu && items.length > 0) {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    dropdown.classList.toggle('open');
-                    // Close other dropdowns
-                    dropdowns.forEach(other => {
-                        if (other !== dropdown) {
-                            other.classList.remove('open');
-                        }
-                    });
+            if (!button || !menu || items.length === 0) {
+                console.error('Dropdown elements missing:', { button: !!button, menu: !!menu, items: items.length });
+                return;
+            }
+            
+            // Handle dropdown button click
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close other dropdowns
+                dropdowns.forEach(other => {
+                    if (other !== dropdown) {
+                        other.classList.remove('open');
+                    }
                 });
                 
-                items.forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const value = item.dataset.value;
-                        const text = item.textContent;
-                        
-                        const buttonText = button.querySelector('span');
-                        if (buttonText) {
-                            buttonText.textContent = text;
-                        }
-                        button.dataset.value = value;
-                        dropdown.classList.remove('open');
-                    });
+                // Toggle current dropdown
+                dropdown.classList.toggle('open');
+            });
+            
+            // Handle dropdown item selection
+            items.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const value = item.dataset.value;
+                    const text = item.textContent;
+                    
+                    // Update button text
+                    const buttonText = button.querySelector('span');
+                    if (buttonText) {
+                        buttonText.textContent = text;
+                    }
+                    
+                    // Store selected value
+                    button.dataset.value = value;
+                    
+                    // Update global variables
+                    if (dropdown.id === 'approachDropdown') {
+                        selectedApproachLang = value;
+                    } else if (dropdown.id === 'codeDropdown') {
+                        selectedCodeLang = value;
+                    }
+                    
+                    // Close dropdown
+                    dropdown.classList.remove('open');
+                    
+                    console.log('Selected:', { dropdown: dropdown.id, value, text });
                 });
-            }
+            });
         });
         
         // Close dropdowns when clicking outside
@@ -96,265 +107,365 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function loadUserPreferences() {
+        chrome.storage.sync.get(['preferences'], (result) => {
+            if (result.preferences) {
+                const prefs = result.preferences;
+                
+                // Set approach language
+                if (prefs.defaultApproachLang) {
+                    selectedApproachLang = prefs.defaultApproachLang;
+                    updateDropdownSelection('approachDropdown', prefs.defaultApproachLang);
+                }
+                
+                // Set code language
+                if (prefs.defaultCodeLang) {
+                    selectedCodeLang = prefs.defaultCodeLang;
+                    updateDropdownSelection('codeDropdown', prefs.defaultCodeLang);
+                }
+            }
+        });
+    }
+
+    function updateDropdownSelection(dropdownId, value) {
+        const dropdown = document.getElementById(dropdownId);
+        if (!dropdown) return;
+        
+        const button = dropdown.querySelector('.dropdown-button');
+        const item = dropdown.querySelector(`[data-value="${value}"]`);
+        
+        if (button && item) {
+            const buttonText = button.querySelector('span');
+            if (buttonText) {
+                buttonText.textContent = item.textContent;
+            }
+            button.dataset.value = value;
+        }
+    }
+
+    function loadProblemData() {
+        // Check if we're on a Codeforces page
+        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+            if (!tabs[0]?.url?.includes('codeforces.com')) {
+                showError("Please use this extension on a Codeforces problem page");
+                return;
+            }
+            
+            // Request problem data from background script
+            chrome.runtime.sendMessage(
+                {action: 'getProblemData'},
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Runtime error:', chrome.runtime.lastError);
+                        showError("Failed to communicate with extension");
+                        return;
+                    }
+                    
+                    if (!response || !response.success || !response.problem) {
+                        console.error('Invalid response:', response);
+                        showError("Failed to load problem data. Make sure you're on a problem page.");
+                        return;
+                    }
+                    
+                    currentProblem = response.problem;
+                    console.log('📦 Problem loaded:', currentProblem);
+                    updateUI();
+                }
+            );
+        });
+    }
+
     function updateUI() {
-        if (currentProblem) {
-            const problemTitleElement = document.getElementById('problemTitle');
-            if (problemTitleElement) {
-                problemTitleElement.textContent = currentProblem.title;
-            }
-            if (generateBtn) {
-                generateBtn.disabled = false;
-                generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
+        if (currentProblem && problemTitleElement) {
+            problemTitleElement.textContent = currentProblem.title || 'Problem loaded';
+        }
+        
+        if (generateBtn && currentProblem) {
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Generate Solution';
         }
     }
 
     function showError(message) {
         console.error('❌ Error:', message);
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm';
-        errorDiv.textContent = message;
-        const container = document.querySelector('.container');
-        if (container) {
-            container.appendChild(errorDiv);
+        
+        if (problemTitleElement) {
+            problemTitleElement.textContent = message;
+            problemTitleElement.style.color = '#ff6b6b';
+        }
+        
+        if (generateBtn) {
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Error';
         }
     }
 
+    // Generate solution button click handler
     if (generateBtn) {
         generateBtn.addEventListener('click', function() {
             console.log('🎯 Generate button clicked');
+            
             if (!currentProblem) {
                 showError('No problem detected');
                 return;
             }
+            
             generateSolution();
         });
     }
 
-async function generateSolution() {
-  if (!currentProblem?.title) {
-    showError("No problem detected on this page");
-    return;
-  }
+    async function generateSolution() {
+        if (!currentProblem?.title) {
+            showError("No problem detected on this page");
+            return;
+        }
 
-  console.log("⚡ Starting solution generation");
+        console.log("⚡ Starting solution generation");
+        console.log("Selected languages:", { approach: selectedApproachLang, code: selectedCodeLang });
 
-  const approachLangButton = document.getElementById("approachLangSelect");
-  const codeLangButton = document.getElementById("codeLangSelect");
+        // Show loading state
+        if (loadingDiv) {
+            loadingDiv.style.display = 'block';
+            loadingDiv.classList.add('show');
+        }
+        if (resultsDiv) {
+            resultsDiv.classList.remove('show');
+            resultsDiv.style.display = 'none';
+        }
+        if (generateBtn) {
+            generateBtn.disabled = true;
+            generateBtn.textContent = "Generating...";
+        }
 
-  const approachLang = approachLangButton?.dataset.value || "hinglish";
-  const codeLang = codeLangButton?.dataset.value || "cpp";
-
-  // Show loading
-  if (loadingDiv) loadingDiv.classList.remove("hidden");
-  if (resultsDiv) resultsDiv.classList.remove("show");
-  if (generateBtn) {
-    generateBtn.disabled = true;
-    generateBtn.textContent = "Generating...";
-  }
-
-  try {
-    const solution = await callAI(currentProblem, approachLang, codeLang);
-    displayResults(solution.approach, solution.code, codeLang);
-  } catch (error) {
-    console.error("💥 Generation error:", error);
-    showError("Failed to generate solution. Please try again.");
-  } finally {
-    if (loadingDiv) loadingDiv.classList.add("hidden");
-    if (generateBtn) {
-      generateBtn.disabled = false;
-      generateBtn.textContent = "Generate Solution";
-    }
-  }
-}
-
-
-    // async function generateSolution() {
-    //         if (!currentProblem?.title) {
-    //     showError("No problem detected on this page");
-    //     return;
-    // }
-    //     console.log('⚡ Starting solution generation');
-        
-    //     // Get values from custom dropdowns
-    //     const approachLangButton = document.getElementById('approachLangSelect');
-    //     const codeLangButton = document.getElementById('codeLangSelect');
-        
-    //     const approachLang = approachLangButton?.dataset.value || 'hinglish';
-    //     const codeLang = codeLangButton?.dataset.value || 'cpp';
-        
-    //     console.log('🌐 Languages:', { approachLang, codeLang });
-        
-    //     // Show loading state
-    //     if (loadingDiv) {
-    //         loadingDiv.classList.remove('show')
-    //         console.log('⏳ Loading shown');
-    //     }
-    //     if (resultsDiv) {
-    //         resultsDiv.classList.remove('show');
-    //     }
-    //     if (generateBtn) {
-    //         generateBtn.disabled = true;
-    //         generateBtn.textContent = 'Generating...';
-    //     }
-
-    //     try {
-    //         // Simulate API call with mock data
-    //         await new Promise(resolve => setTimeout(resolve, 2000));
-            
-    //         const mockSolution = getMockSolution(currentProblem.title, approachLang, codeLang);
-    //         console.log('📝 Mock solution generated');
-            
-    //         // Display results
-    //         displayResults(mockSolution.approach, mockSolution.code, codeLang);
-            
-    //     } catch (error) {
-    //         console.error('💥 Generation error:', error);
-    //         showError('Failed to generate solution. Please try again.');
-    //     } finally {
-    //         if (loadingDiv) {
-    //             loadingDiv.classList.add('hidden');
-    //             console.log('⏳ Loading hidden');
-    //         }
-    //         if (generateBtn) {
-    //             generateBtn.disabled = false;
-    //             generateBtn.textContent = 'Generate Solution';
-    //         }
-    //     }
-    // }
-
-    async function callAI(problem, approachLang, codeLang) {
-    // Get API keys from storage
-    const result = await new Promise(resolve => {
-        chrome.storage.sync.get(['openaiKey', 'claudeKey', 'geminiKey', 'selectedAI'], resolve);
-    });
-    
-    const prompt = `
-Problem: ${problem.title}
-Statement: ${problem.statement}
-Time Limit: ${problem.timeLimit}
-Memory Limit: ${problem.memoryLimit}
-Examples: ${JSON.stringify(problem.examples)}
-
-Please provide:
-1. A solution approach in ${approachLang} language
-2. Clean code in ${codeLang}
-
-Format your response as:
-APPROACH:
-[Your approach here]
-
-CODE:  
-[Your code here]
-`;
-
-    // Try OpenAI first
-    if (result.openaiKey) {
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${result.openaiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: 'gpt-4',
-                    messages: [{ role: 'user', content: prompt }],
-                    max_tokens: 2000
-                })
+            const solution = await callAI(currentProblem, selectedApproachLang, selectedCodeLang);
+            displayResults(solution.approach, solution.code, selectedCodeLang);
+            
+            // Update usage stats
+            chrome.runtime.sendMessage({
+                action: 'updateStats',
+                statType: 'solution_generated'
             });
             
-            if (response.ok) {
-                const data = await response.json();
-                return parseAIResponse(data.choices[0].message.content);
-            }
         } catch (error) {
-            console.error('OpenAI error:', error);
+            console.error("💥 Generation error:", error);
+            showError("Failed to generate solution: " + error.message);
+        } finally {
+            // Hide loading state
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+                loadingDiv.classList.remove('show');
+            }
+            if (generateBtn) {
+                generateBtn.disabled = false;
+                generateBtn.textContent = "Generate Solution";
+            }
         }
     }
-    
-    // Fallback to mock if API fails
-    return getMockSolution(problem.title, approachLang, codeLang);
-}
 
-function parseAIResponse(response) {
-    const parts = response.split('CODE:');
-    const approach = parts[0].replace('APPROACH:', '').trim();
-    const code = parts[1] ? parts[1].trim() : 'No code provided';
-    
-    return { approach, code };
-}
+    async function callAI(problem, approachLang, codeLang) {
+        // Get API keys from storage
+        const result = await new Promise(resolve => {
+            chrome.storage.sync.get(['apiKeys'], resolve);
+        });
+        
+        const apiKeys = result.apiKeys || {};
+        
+        // Auto-select the first available API key
+        let selectedAI = apiKeys.selectedAI;
+        if (!selectedAI || !apiKeys[selectedAI + 'Key']) {
+            if (apiKeys.openaiKey) {
+                selectedAI = 'openai';
+            } else if (apiKeys.claudeKey) {
+                selectedAI = 'claude';
+            } else if (apiKeys.geminiKey) {
+                selectedAI = 'gemini';
+            } else {
+                throw new Error('No API keys configured. Please add your API keys in the options page.');
+            }
+        }
+        
+        console.log('🤖 Using AI provider:', selectedAI);
+
+        // Create prompt
+        const prompt = createPrompt(problem, approachLang, codeLang);
+        console.log('📝 Generated prompt length:', prompt.length);
+
+        // Call appropriate AI service
+        try {
+            if (selectedAI === 'openai' && apiKeys.openaiKey) {
+                return await callOpenAI(prompt, apiKeys.openaiKey);
+            } else if (selectedAI === 'claude' && apiKeys.claudeKey) {
+                return await callClaude(prompt, apiKeys.claudeKey);
+            } else if (selectedAI === 'gemini' && apiKeys.geminiKey) {
+                return await callGemini(prompt, apiKeys.geminiKey);
+            } else {
+                throw new Error(`No API key found for ${selectedAI}. Please configure your API keys in the options page.`);
+            }
+        } catch (error) {
+            console.error(`${selectedAI} API error:`, error);
+            throw error;
+        }
+    }
+
+    function createPrompt(problem, approachLang, codeLang) {
+        const examplesText = problem.examples && problem.examples.length > 0 
+            ? problem.examples.map(ex => `Input: ${ex.input}\nOutput: ${ex.output}`).join('\n\n')
+            : 'No examples provided';
+
+        return `Problem: ${problem.title}
+
+Statement: ${problem.statement}
+
+Time Limit: ${problem.timeLimit}
+Memory Limit: ${problem.memoryLimit}
+
+Examples:
+${examplesText}
+
+Please provide:
+1. A solution approach in ${approachLang} language (be detailed and explain the algorithm step by step)
+2. Clean, well-commented code in ${codeLang}
+
+Format your response exactly as:
+APPROACH:
+[Your detailed approach here]
+
+CODE:
+[Your code here]`;
+    }
+
+    async function callOpenAI(prompt, apiKey) {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ 
+                    role: 'user', 
+                    content: prompt 
+                }],
+                max_tokens: 2000,
+                temperature: 0.7
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`OpenAI API failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+        
+        const data = await response.json();
+        return parseAIResponse(data.choices[0].message.content);
+    }
+
+    async function callClaude(prompt, apiKey) {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'x-api-key': apiKey,
+                'Content-Type': 'application/json',
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 2000,
+                messages: [{ 
+                    role: 'user', 
+                    content: prompt 
+                }]
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Claude API failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+        
+        const data = await response.json();
+        return parseAIResponse(data.content[0].text);
+    }
+
+    async function callGemini(prompt, apiKey) {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{ 
+                    parts: [{ text: prompt }] 
+                }]
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Gemini API failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+        
+        const data = await response.json();
+        return parseAIResponse(data.candidates[0].content.parts[0].text);
+    }
+
+    function parseAIResponse(response) {
+        console.log('🔍 Parsing AI response...');
+        
+        const approachMatch = response.match(/APPROACH:\s*([\s\S]*?)(?=CODE:|$)/i);
+        const codeMatch = response.match(/CODE:\s*([\s\S]*?)$/i);
+        
+        const approach = approachMatch ? approachMatch[1].trim() : 'No approach provided';
+        const code = codeMatch ? codeMatch[1].trim() : 'No code provided';
+        
+        console.log('Parsed lengths:', { approach: approach.length, code: code.length });
+        
+        return { approach, code };
+    }
 
     function displayResults(approach, code, language) {
         console.log('📊 Displaying results...');
-        console.log('Approach length:', approach.length);
-        console.log('Code length:', code.length);
         
         if (approachDiv) {
-            approachDiv.innerHTML = `<pre class="whitespace-pre-wrap text-sm leading-relaxed">${approach}</pre>`;
-            console.log('✅ Approach div updated');
-        } else {
-            console.error('❌ approachDiv not found!');
+            approachDiv.innerHTML = `<pre class="whitespace-pre-wrap">${escapeHtml(approach)}</pre>`;
         }
         
         if (codeDiv) {
-            codeDiv.innerHTML = `<pre><code class="language-${language.toLowerCase()}">${code}</code></pre>`;
-            console.log('✅ Code div updated');
-        } else {
-            console.error('❌ codeDiv not found!');
+            codeDiv.innerHTML = `<pre><code>${escapeHtml(code)}</code></pre>`;
         }
         
         if (resultsDiv) {
+            resultsDiv.style.display = 'block';
             resultsDiv.classList.add('show');
-            console.log('✅ Results div shown');
-            // Scroll to results
-            resultsDiv.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            console.error('❌ resultsDiv not found!');
             
-            // Fallback: Create results section if it doesn't exist
-            const container = document.querySelector('.container');
-            if (container) {
-                const resultsHTML = `
-                    <div id="results-fallback" class="mt-4 p-4 bg-gray-800 rounded-lg">
-                        <h3 class="text-white mb-2">Approach:</h3>
-                        <div class="bg-gray-700 p-3 rounded mb-4">
-                            <pre class="text-sm text-gray-200 whitespace-pre-wrap">${approach}</pre>
-                        </div>
-                        <button id="copyApproachFallback" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Copy Approach</button>
-                        
-                        <h3 class="text-white mb-2 mt-4">Code:</h3>
-                        <div class="bg-gray-700 p-3 rounded mb-4">
-                            <pre class="text-sm text-gray-200"><code>${code}</code></pre>
-                        </div>
-                        <button id="copyCodeFallback" class="bg-blue-500 text-white px-3 py-1 rounded">Copy Code</button>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', resultsHTML);
-                console.log('🆘 Fallback results created');
-                
-                // Add copy functionality to fallback buttons
-                document.getElementById('copyApproachFallback')?.addEventListener('click', () => {
-                    copyToClipboard(approach, document.getElementById('copyApproachFallback'));
-                });
-                document.getElementById('copyCodeFallback')?.addEventListener('click', () => {
-                    copyToClipboard(code, document.getElementById('copyCodeFallback'));
-                });
-            }
+            // Scroll to results
+            setTimeout(() => {
+                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
         }
+        
+        console.log('✅ Results displayed successfully');
     }
 
-    // Copy to clipboard functionality
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Copy button handlers
     if (copyApproachBtn) {
         copyApproachBtn.addEventListener('click', function() {
-            const text = approachDiv.textContent;
+            const text = approachDiv ? approachDiv.textContent : '';
             copyToClipboard(text, copyApproachBtn);
         });
     }
 
     if (copyCodeBtn) {
         copyCodeBtn.addEventListener('click', function() {
-            const text = codeDiv.textContent;
+            const text = codeDiv ? codeDiv.textContent : '';
             copyToClipboard(text, copyCodeBtn);
         });
     }
@@ -362,135 +473,32 @@ function parseAIResponse(response) {
     async function copyToClipboard(text, button) {
         try {
             await navigator.clipboard.writeText(text);
+            
             const originalText = button.textContent;
             button.textContent = 'Copied!';
-            button.classList.add('bg-green-500');
+            button.style.background = 'rgba(76, 175, 80, 0.3)';
+            
             console.log('📋 Text copied to clipboard');
             
             setTimeout(() => {
                 button.textContent = originalText;
-                button.classList.remove('bg-green-500');
+                button.style.background = '';
             }, 2000);
         } catch (err) {
             console.error('❌ Failed to copy text:', err);
+            
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = 'Copy';
+            }, 2000);
         }
-    }
-
-    function getMockSolution(problemTitle, approachLang, codeLang) {
-        
-const approaches = {
-    english: {
-        default: `To solve this problem, we need to analyze the constraints and find an efficient approach:
-
-1. First, understand the problem requirements and constraints
-2. Identify the key patterns or mathematical relationships
-3. Choose the appropriate data structures and algorithms
-4. Implement the solution with proper edge case handling
-5. Optimize for time and space complexity
-
-Key insights:
-- Look for patterns in the input/output examples
-- Consider greedy approaches for optimization problems
-- Use appropriate data structures (arrays, maps, sets)
-- Handle edge cases like empty inputs or boundary values
-
-Time Complexity: O(n) or O(n log n) depending on the approach
-Space Complexity: O(1) or O(n) for additional storage`
-    },
-    hinglish: {
-        default: `Is problem ko solve karne ke liye humein step-by-step approach follow karna hoga:
-
-1. Pehle problem statement ko achhe se samjho aur constraints check karo
-2. Examples dekh kar pattern identify karo
-3. Efficient algorithm choose karo jo time limit mein run ho sake
-4. Code likhte waqt edge cases handle karna mat bhoolna
-
-Key points:
-- Input/output examples mein pattern dhundho
-- Agar optimization problem hai to greedy approach try karo
-- Sahi data structures use karo (arrays, maps, sets)
-- Empty inputs ya boundary values handle karo
-
-Time Complexity: O(n) ya O(n log n) approach ke hisaab se
-Space Complexity: O(1) ya O(n) extra storage ke liye`
-    }
-};
-
-const codes = {
-    cpp: `#include <bits/stdc++.h>
-using namespace std;
-
-void solve() {
-    // Solution logic here
-    int n;
-    cin >> n;
-    // Your code here
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr);
-    
-    int t = 1;
-    cin >> t;
-    while (t--) {
-        solve();
-    }
-    return 0;
-}`,
-
-    python: `def solve():
-    import sys
-    input = sys.stdin.read
-    data = input().split()
-    
-    idx = 0
-    t = int(data[idx])
-    idx += 1
-    
-    for _ in range(t):
-        n = int(data[idx])
-        idx += 1
-        # Your code here
-
-if __name__ == "__main__":
-    solve()`,
-
-    java: `import java.util.*;
-import java.io.*;
-
-public class Main {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int t = sc.nextInt();
-        while (t-- > 0) {
-            int n = sc.nextInt();
-            // Your solution here
-        }
-        sc.close();
-    }
-}`,
-
-    c: `#include <stdio.h>
-
-void solve() {
-    int n;
-    scanf("%d", &n);
-    // Your solution here
-}
-
-int main() {
-    int t;
-    scanf("%d", &t);
-    while (t--) {
-        solve();
-    }
-    return 0;
-}`
-};
-        return {
-            approach: approaches[approachLang]?.general || approaches.english.general,
-            code: codes[codeLang] || codes.cpp
-        };
     }
 });
