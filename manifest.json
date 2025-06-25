@@ -8,20 +8,13 @@
     "storage",
     "contextMenus",
     "scripting",
-    "notifications",
-    "activeTab",
-    "storage",
-    "contextMenus",
-    "scripting",
-    "notifications",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://codeforces.com/*",
     "https://api.openai.com/*",
     "https://api.anthropic.com/*",
     "https://generativelanguage.googleapis.com/*"
-  ],
-
-
-  "host_permissions": [
-    "https://codeforces.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -30,27 +23,28 @@
     "default_popup": "popup.html",
     "default_title": "Codeforces AI Assistant",
     "default_icon": {
-      "16": "icons/icons16px.png",
-      "32": "icons/icons32px.png",
-      "64": "icons/icons64px.png",
-      "128": "icons/icons128px.png"
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "64": "icons/icon64.png",
+      "128": "icons/icon128.png"
     }
   },
   "content_scripts": [
     {
       "matches": [
         "https://codeforces.com/problemset/problem/*",
-        "https://codeforces.com/contest/*/problem/*"
+        "https://codeforces.com/contest/*/problem/*",
+        "https://codeforces.com/gym/*/problem/*"
       ],
       "js": ["content.js"],
       "run_at": "document_end"
     }
   ],
   "icons": {
-    "16": "icons/icons16px.png",
-    "32": "icons/icons32px.png",
-    "64": "icons/icons64px.png",
-    "128": "icons/icons128px.png"
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "64": "icons/icon64.png",
+    "128": "icons/icon128.png"
   },
   "commands": {
     "open-extension": {
@@ -60,5 +54,5 @@
       "description": "Open Codeforces AI Assistant"
     }
   },
-  "options_page": "options_html.html"
+  "options_page": "options.html"
 }
