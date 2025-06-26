@@ -129,10 +129,20 @@ The extension supports three AI providers:
 4. Test thoroughly
 5. Submit a pull request
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+---
+
+## 👨‍💻 Author
+
+**Abhinav**
+- 🌐 [LinkedIn](https://linkedin.com/in/abhinavphi)
+- 📷 [Instagram](https://instagram.com/abhinav.phi)
+- 💻 [GitHub](https://github.com/abhinav-phi)
+
+---
 ## Changelog
 
 ### v1.0.0
@@ -141,3 +151,11 @@ MIT License - see LICENSE file for details
 - Problem extraction from Codeforces
 - Modern UI with theme support
 - Settings and statistics tracking
+
+<div align="center">
+
+**Made with ❤️ & ☕ by Abhinav**
+
+[⭐ Star this repository](https://github.com/abhinav-phi/to-undo-app) if it helps you break free from unwanted habits!
+
+</div>
